@@ -57,10 +57,12 @@ public class PlayerMovement : MonoBehaviour
         sprinting,
         crouching,
         sliding,
+        wallrunning,
         air
     }
 
     public bool sliding;
+    public bool wallrunning;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

@@ -6,27 +6,36 @@ public class PlayerCam : MonoBehaviour
     public float sensY;
 
     public Transform orientation;
+    public Transform camHolder;
 
     float xRotation;
     float yRotation;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    private float tilt;
+
+    private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        float mouseX = Input.GetAxis("Mouse X") * Time.deltaTime * sensX;
-        float mouseY = Input.GetAxis("Mouse Y") * Time.deltaTime * sensY;
+        // Myszka
+        float mouseX = Input.GetAxisRaw("Mouse X") * Time.deltaTime * sensX;
+        float mouseY = Input.GetAxisRaw("Mouse Y") * Time.deltaTime * sensY;
 
         yRotation += mouseX;
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
+        // Obrót kamery i orientacji
+        transform.localRotation = Quaternion.Euler(xRotation, yRotation, tilt);
         orientation.rotation = Quaternion.Euler(0, yRotation, 0);
+    }
+
+    public void DoTilt(float zTilt)
+    {
+        tilt = Mathf.Lerp(tilt, zTilt, Time.deltaTime * 10f);
     }
 }

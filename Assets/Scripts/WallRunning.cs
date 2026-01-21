@@ -13,6 +13,12 @@ public class WallRunning : MonoBehaviour
     public float wallJumpUpForce;
     public float wallJumpSideForce;
 
+    [Header("Camera")]
+    public Camera cam; // Zmieniono na Camera
+    public float tiltAngle = 15f;
+    public float tiltSpeed = 10f;
+    private float currentTilt;
+
     [Header("Input")]
     private float horizontalInput;
     private float verticalInput;
@@ -34,12 +40,16 @@ public class WallRunning : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         pm = GetComponent<PlayerMovement>();
+        
+        // Automatyczne przypisanie kamery jeśli puste
+        if (cam == null) cam = Camera.main;
     }
 
     private void Update()
     {
         CheckForWall();
         StateMachine();
+        HandleCameraTilt();
     }
 
     private void FixedUpdate()
@@ -64,23 +74,36 @@ public class WallRunning : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        // Stan Wallrunning
         if ((wallLeft || wallRight) && verticalInput > 0 && AboveGround())
         {
             if (!pm.wallrunning)
                 StartWallRun();
-            
-            // Wall Jump
+
             if (Input.GetKeyDown(pm.jumpKey))
-            {
                 WallJump();
-            }
         }
         else
         {
             if (pm.wallrunning)
                 StopWallRun();
         }
+    }
+
+    private void HandleCameraTilt()
+    {
+        float targetTilt = 0;
+
+        if (pm.wallrunning)
+        {
+            if (wallLeft) targetTilt = -tiltAngle;
+            else if (wallRight) targetTilt = tiltAngle;
+        }
+
+        // Płynne przejście
+        currentTilt = Mathf.Lerp(currentTilt, targetTilt, Time.deltaTime * tiltSpeed);
+
+        // Aplikowanie rotacji tylko na osi Z, zachowując X i Y z myszki
+        cam.transform.localRotation = Quaternion.Euler(cam.transform.localEulerAngles.x, cam.transform.localEulerAngles.y, currentTilt);
     }
 
     private void StartWallRun()
@@ -95,15 +118,11 @@ public class WallRunning : MonoBehaviour
 
     private void WallJump()
     {
-        // Skok anuluje wallrun
         StopWallRun();
-
         Vector3 wallNormal = wallRight ? rightWallHit.normal : leftWallHit.normal;
         Vector3 forceToApply = transform.up * wallJumpUpForce + wallNormal * wallJumpSideForce;
-
-        // Reset prędkości Y dla spójnej wysokości skoku
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(forceToApply, ForceMode.Impulse);
     }
 
